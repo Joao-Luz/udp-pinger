@@ -40,7 +40,8 @@ Where `<package status>` might be:
 
 - `Invalid package: expected a pong!`: the pong byte is not a `'1'`;
 - `Invalid package: ping and pong don't match!`: received and sent messages don't match;
-- `<id> - Received package - rtt: <rtt>ms`: Successful package transmission.
+- `Timeout`: when there is a 1 second timeout;
+- `Received package - rtt: <rtt>ms`: successful package transmission.
 
 ### Server
 The server's output will log what happens with the incoming packages. I'll log things such as:

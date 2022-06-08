@@ -72,7 +72,7 @@ for i in range(10):
         
     # if timeout, go to next message
     except timeout:
-        print(f'\t{i} - Timeout for package')
+        print(f'\t{i} - Timeout')
 
 print(f'\n--- {ip}:{port} ping statistics ---')
 print(f'10 packets transmitted, {len(rtts)} received, {10*(10 - len(rtts))}% packet loss, time={sum(rtts):.0f}ms')
