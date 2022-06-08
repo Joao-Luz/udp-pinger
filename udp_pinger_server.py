@@ -47,7 +47,7 @@ while True:
             ping = '1'
         else:
             server_socket.sendto(message.encode('utf-8'), address)
-            print('Dropped: ping/pong error.')
+            print('DROPPED: ping/pong error.')
             continue
         
         # protocol error
@@ -71,17 +71,17 @@ while True:
                 msg = message
                 addr = address
                 delay = True
-                print('Simulating packet delay ')
+                print('Simulating packet delay')
                 continue
         
         # sending package
         if int(id) == 8 and delay and simulate_delay_send:
             server_socket.sendto(msg.encode('utf-8'), addr)
-            print(f'Sending packet {msg}')
+            print(f'SENT: {msg}')
             time.sleep(0.2)
 
         server_socket.sendto(message.encode('utf-8'), address)
-        print(f'Send: {message} ')
+        print(f'SENT: {message} ')
 
     except error:
         print(f'Error {error}')
