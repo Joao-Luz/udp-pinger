@@ -17,28 +17,63 @@ server_address = (ip, port)
 
 rtts = []
 
+def form_message(i : int, msg : str) -> str:
+    # message has format 00001  0        2431          message00000000000000000000000
+    #                    < id > < ping > < timestamp > <             msg            >
+    id = str(i).rjust(5,'0')
+    ping = '0'
+    timestamp = str(int(time.time_ns()/1000000) % 10000)
+    message = msg.ljust(30, '\0')
+
+    return id + ping + timestamp + message
+
+print(f'Sending 10 packages to {ip}:{port}...\n')
+
 for i in range(10):
     
-    send = time.time()
+    senttime = time.time()
 
-    message = f'PING {i + 1} {time.strftime("%H:%M:%S")}'
-    message = bytes(message, 'ascii')
-    client_socket.sendto(message, server_address)
-    
+    # form message
+    sentmsg = form_message(i, 'some message')
+
+    # send message
+    client_socket.sendto(sentmsg.encode(), server_address)
+
+    # receive message
     try:
-        data, server = client_socket.recvfrom(30)
+        recvmsg, sever = client_socket.recvfrom(40)
+        recvmsg = recvmsg.decode()
 
-        receive = time.time()
-    
-        rtt = 1000*(receive - send)
+        # check for:
+        #   1- correct id
+        recvid = int(recvmsg[0:5])
+        while(recvid < i):
+            #   1.1- discard message and keep waiting for the right one
+            recvmsg, sever = client_socket.recvfrom(40)
+            recvmsg = recvmsg.decode()
+            recvid = int(recvmsg[0:5])
+        
+        recvtime = time.time()
+        
+        #   2- is a pong
+        recvpong = recvmsg[5]
+        if recvpong != '1':
+            print(f'\t{i} - Invalid package: expected a pong!')
+            continue
+
+        #   3- messages match
+        if (recvmsg[0:5] + recvmsg[6:]) != (sentmsg[0:5] + sentmsg[6:]):
+            print(f'\t{i} - Invalid package: ping and pong don\'t match!')
+            continue
+
+        rtt = (recvtime - senttime)*10**4
+        print(f'\t{i} - Received package - rtt: {rtt:.3f}ms')
         rtts.append(rtt)
-        print(f'Received {data} - rtt : {rtt:.4f}ms')
-    
+        
+    # if timeout, go to next message
     except timeout:
-        print(f'Timeout on packet {i}')
+        print(f'\t{i} - Timeout for package')
 
-print(f'10 packets transmitted, {len(rtts)} received, {10*(10 - len(rtts))}% packet loss')
-print(f'time - {sum(rtts):.4f}ms')
-print(f'min - {min(rtts):.4f}ms')
-print(f'avg - {mean(rtts):.4f}ms')
-print(f'std - {stdev(rtts):.4f}ms')  
+print(f'\n--- {ip}:{port} ping statistics ---')
+print(f'10 packets transmitted, {len(rtts)} received, {10*(10 - len(rtts))}% packet loss, time={sum(rtts):.0f}ms')
+print(f'rtt min/avg/max/mdev = {min(rtts):.3f}/{mean(rtts):.3f}/{max(rtts):.3f}/{stdev(rtts):.3f} ms')
